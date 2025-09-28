@@ -1,7 +1,34 @@
 import logo from './logo.svg';
 import './App.css';
+import React from 'react';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 function App() {
+
+  const [genres, setGenres] = useState([]);
+  
+  /**
+   * APIからジャンルを取得する関数
+   */
+  const selectGenres = async () => {
+    try {
+      console.log("Fetching genres...");
+      const resp = await axios.get("http://127.0.0.1:8000/genres");
+      setGenres(resp.data);
+      console.log("genres Fetched...");
+    }
+    catch (ex) {
+      console.error("Error select genres:",ex);
+    }
+  }
+
+// コンストラクタ
+useEffect(() => {
+  selectGenres();
+},[]
+);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -30,9 +57,17 @@ function App() {
             <option value="" disabled hidden>
               ジャンル名を選択してください
             </option>
-            <option value="ジャンル1">ジャンル1</option>
-            <option value="ジャンル2">ジャンル2</option>
-            <option value="ジャンル3">ジャンル3</option>
+
+          {genres.map((genre) => {
+            return (
+              <React.Fragment key={genre.genre_code}>
+                <option value={genre.genre_code}>{genre.genre_name}</option>
+              </React.Fragment>
+            )
+          }
+          )
+          }
+
           </select>
 
           {/* キャラクタ名 */}
@@ -40,10 +75,10 @@ function App() {
             <option value="" disabled hidden>
               キャラクタ名を選択してください
             </option>
-              <option value="キャラクタ1">キャラクタ1</option>
-              <option value="キャラクタ2">キャラクタ2</option>
-              <option value="キャラクタ3">キャラクタ3</option>
-            </select>
+            <option value="キャラクタ1">キャラクタ1</option>
+            <option value="キャラクタ2">キャラクタ2</option>
+            <option value="キャラクタ3">キャラクタ3</option>
+          </select>
         </div>
 
         <div>
