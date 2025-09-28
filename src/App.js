@@ -7,7 +7,10 @@ import { useEffect, useState } from 'react';
 function App() {
 
   const [genres, setGenres] = useState([]);
-  
+  const [characters, setCharacters] = useState([]);
+  const [rand_questions, setRandQuestions] = useState([]);
+  const [ai_answer, setAiAnswer] = useState("質問をしてください");
+
   /**
    * APIからジャンルを取得する関数
    */
@@ -19,37 +22,78 @@ function App() {
       console.log("genres Fetched...");
     }
     catch (ex) {
-      console.error("Error select genres:",ex);
+      console.error("Error select genres:", ex);
     }
   }
 
-// コンストラクタ
-useEffect(() => {
-  selectGenres();
-},[]
-);
+  /**
+   * APIからキャラクタを取得する関数
+   */
+  const selectCharacters = async () => {
+    try {
+      console.log("Fetching characters...");
+      const resp = await axios.get("http://127.0.0.1:8000/characters");
+      setCharacters(resp.data);
+      console.log("characters Fetched...");
+    }
+    catch (ex) {
+      console.error("Error select characters:", ex);
+    }
+  }
+
+  const selectRandQuestions = async () => {
+    try {
+      console.log("Fetching random_questions...");
+      const resp = await axios.get("http://127.0.0.1:8000/random_questions");
+      setRandQuestions(resp.data);
+      console.log("random_questions Fetched...");
+    }
+    catch (ex) {
+      console.error("Error select random_questions:", ex);
+    }
+  }
+
+  const updateQuestions = () => {
+    selectRandQuestions();
+  }
+
+  // コンストラクタ
+  useEffect(() => {
+    selectGenres();
+    selectCharacters();
+    selectRandQuestions();
+  }, []
+  );
 
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
 
-        <ui>
-          <button className='question-button'>質問1</button>
-          <button className='question-button'>質問2</button>
-          <button className='question-button'>質問3</button>
-        </ui>
+        {/* <img src={logo} className="App-logo" alt="logo" /> */}
+        <div>
+          <input
+            type="text"
+            readOnly
+            className='ai-answer'
+            value={ai_answer}>
+          </input>
+        </div>
+        <div className='quesitons'>
+          <ui>
+            {rand_questions.map((question) => {
+              return (
+                <React.Fragment key={question.question_id}>
+                  <button className='question-button' value={question.question_id}>{question.question_content}</button>
+                </React.Fragment>
+              )
+            }
+            )
+            }
+          </ui>
+          <ui>
+            <button className='update-button' onClick={updateQuestions}>更新</button>
+          </ui>
+        </div>
 
         <div >
           {/* ジャンル名 */}
@@ -58,15 +102,15 @@ useEffect(() => {
               ジャンル名を選択してください
             </option>
 
-          {genres.map((genre) => {
-            return (
-              <React.Fragment key={genre.genre_code}>
-                <option value={genre.genre_code}>{genre.genre_name}</option>
-              </React.Fragment>
+            {genres.map((genre) => {
+              return (
+                <React.Fragment key={genre.genre_code}>
+                  <option value={genre.genre_code}>{genre.genre_name}</option>
+                </React.Fragment>
+              )
+            }
             )
-          }
-          )
-          }
+            }
 
           </select>
 
@@ -75,9 +119,15 @@ useEffect(() => {
             <option value="" disabled hidden>
               キャラクタ名を選択してください
             </option>
-            <option value="キャラクタ1">キャラクタ1</option>
-            <option value="キャラクタ2">キャラクタ2</option>
-            <option value="キャラクタ3">キャラクタ3</option>
+            {characters.map((character) => {
+              return (
+                <React.Fragment key={character.id}>
+                  <option value={character.id}>{character.character_name}</option>
+                </React.Fragment>
+              )
+            }
+            )
+            }
           </select>
         </div>
 
