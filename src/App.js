@@ -41,6 +41,24 @@ function App() {
     }
   }
 
+  /***
+   * 【初期化処理】
+   * DBに新規お題やセッションIDを追加
+   */
+  const initializeQuestion = async () => {
+    try {
+      console.log("initializing new Question...")
+      const resp = await axios.post("http://127.0.0.1:8000/new_question");
+      console.log("initialized new Quesiton!")
+    }
+    catch(ex){
+      console.error("Error initialize new Question:", ex)
+    }
+  }
+
+  /***
+   * 3つの質問を更新する関数
+   */
   const selectRandQuestions = async () => {
     try {
       console.log("Fetching random_questions...");
@@ -53,12 +71,9 @@ function App() {
     }
   }
 
-  const updateQuestions = () => {
-    selectRandQuestions();
-  }
-
   // コンストラクタ
   useEffect(() => {
+    initializeQuestion();
     selectGenres();
     selectCharacters();
     selectRandQuestions();
@@ -91,7 +106,7 @@ function App() {
             }
           </ui>
           <ui>
-            <button className='update-button' onClick={updateQuestions}>更新</button>
+            <button className='update-button' onClick={selectRandQuestions}>更新</button>
           </ui>
         </div>
 
