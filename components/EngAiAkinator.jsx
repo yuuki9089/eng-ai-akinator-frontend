@@ -106,18 +106,22 @@ export default function EngAiAkinator() {
     try {
       console.log("posting answer...");
       const data = {
-        "session_id":session_id.current,
-        "user_answer_character_id":formData.get("pref_character")
+        "session_id": session_id.current,
+        "user_answer_character_id": formData.get("pref_character")
       };
       console.log("フォームのJSONデータ:", data);
-      const resp = await axios.post("http://127.0.0.1:8000/answer_theme",data);
-      alert(resp.data.ans_result)
+      const resp = await axios.post("http://127.0.0.1:8000/answer_theme", data);
+      if (resp.data.ans_result)
+        alert("...正解！")
+      else
+        alert("残念...！\n再チャレンジしてね！")
       console.log("posted answer!")
     }
     catch (ex) {
       console.error("Error posting answer:", ex);
     }
   }
+
 
   // コンストラクタ
   useEffect(() => {
@@ -186,9 +190,9 @@ export default function EngAiAkinator() {
               <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
                 {user_question}
               </div>
-              <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
-                {ai_answer}
-              </div>
+              <textarea className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center "value={ai_answer}>
+                
+              </textarea>
             </div>
           </div>
           {/* Bottom 1/3 : Features */}
@@ -208,7 +212,36 @@ export default function EngAiAkinator() {
             <h2 className="text-purple-400 font-bold text-4xl mb-2  border-b border-purple-400">
               Past Q & A
             </h2>
-            <div className="h-full bg-slate-700 rounded-lg mt-2"></div>
+            <textarea
+              className="h-full bg-slate-700 rounded-lg mt-2"
+              value="あああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                あああああああああああああああああああああああああああああああああ
+                ">
+
+            </textarea>
           </div>
 
           {/* Answer Section */}
