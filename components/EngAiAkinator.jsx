@@ -95,6 +95,30 @@ export default function EngAiAkinator() {
     setUserQuestion(user_question_content);
   }
 
+  /***
+   * 回答ボタンを押下時に選択肢をpostする関数
+   */
+
+  const tryAnswer = async (formData) => {
+    // e.preventDefault(); // ページリロードを阻止する処理
+    // const form = e.target
+    // const formData = new FormData(form) // formの要素を取得
+    try {
+      console.log("posting answer...");
+      const data = {
+        "session_id":session_id.current,
+        "user_answer_character_id":formData.get("pref_character")
+      };
+      console.log("フォームのJSONデータ:", data);
+      const resp = await axios.post("http://127.0.0.1:8000/answer_theme",data);
+      alert(resp.data.ans_result)
+      console.log("posted answer!")
+    }
+    catch (ex) {
+      console.error("Error posting answer:", ex);
+    }
+  }
+
   // コンストラクタ
   useEffect(() => {
     initializeQuestion();
@@ -192,10 +216,10 @@ export default function EngAiAkinator() {
             <div className="flex border-b border-pink-500">
               <h2 className="text-pink-500 font-bold text-4xl">Answer</h2>
             </div>
-            <form className="flex flex-col gap-2 mt-2">
+            <form className="flex flex-col gap-2 mt-2" action={tryAnswer}>
               <div className="flex flex-col">
                 <label>Genre</label>
-                <select className="bg-slate-700 p-2 rounded-lg" name="pref" defaultValue="" required>
+                <select className="bg-slate-700 p-2 rounded-lg" name="pref_janre" defaultValue="" required>
                   {/* <option>Select Genre</option> */}
                   <option value="" disabled hidden>
                     ジャンル名を選択してください
@@ -214,7 +238,7 @@ export default function EngAiAkinator() {
               </div>
               <div className="flex flex-col">
                 <label>Character</label>
-                <select className="bg-slate-700 p-2 rounded-lg" name="pref" defaultValue="" required>
+                <select id="character" className="bg-slate-700 p-2 rounded-lg" name="pref_character" defaultValue="" required>
                   <option value="" disabled hidden>
                     キャラクタ名を選択してください
                   </option>
