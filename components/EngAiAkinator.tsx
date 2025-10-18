@@ -1,17 +1,29 @@
-import React, { useRef } from 'react';
+import React, { ChangeEvent, useRef } from 'react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
-export default function EngAiAkinator() {
+type EngAiAkinatorProps = {
+  current_session_id: number;
+}
 
-  const [genres, setGenres] = useState([]);
-  const [characters, setCharacters] = useState([]);
-  const [rand_questions, setRandQuestions] = useState([]);
+export default function EngAiAkinator({
+  current_session_id
+}: EngAiAkinatorProps) {
+
+  const [genres, setGenres] = useState<{genre_code:number,genre_name:string}[]>([]);
+  const [characters, setCharacters] = useState<{
+    id:number,
+    character_name:string,
+    genre_code:number,
+    question_times:number
+  }[]>([]);
+  const [rand_questions, setRandQuestions] = useState<{question_id:number,question_content:string}[]>([]);
   const [ai_answer, setAiAnswer] = useState("質問をしてください");
   const session_id = useRef(null);
   const [user_question, setUserQuestion] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState(null);
-
+  const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
+  const [chat_history, setChatHistory] = useState([]);
 
   /**
    * APIからジャンルを取得する関数
@@ -42,22 +54,7 @@ export default function EngAiAkinator() {
     }
   }
 
-  /***
-   * 【初期化処理】
-   * DBに新規お題やセッションIDを追加
-   */
-  const initializeQuestion = async () => {
-    try {
-      console.log("initializing new Question...")
-      const resp = await axios.post("http://127.0.0.1:8000/new_question");
-      session_id.current = resp.data.session_id
 
-      console.log("initialized new Quesiton!")
-    }
-    catch (ex) {
-      console.error("Error initialize new Question:", ex)
-    }
-  }
 
   /***
    * 3つの質問を更新する関数
@@ -77,7 +74,7 @@ export default function EngAiAkinator() {
   /***
    * 質問をpostする関数
    */
-  const registerQuestion = async (user_question) => {
+  const registerQuestion = async (user_question: string) => {
     try {
       console.log("posting question...")
       const data = { session_id: session_id.current, user_question_content: user_question }
@@ -90,16 +87,31 @@ export default function EngAiAkinator() {
     }
   }
 
+  /**
+   * 会話履歴マスタから過去の会話履歴の一覧を取得するAPI
+   */
+  const getChatHistory = async () => {
+    try {
+      console.log("Fetching chat_history...");
+      console.log(session_id.current)
+      const resp = await axios.get(`http://127.0.0.1:8000/past_q_and_a/${session_id.current}`);
+      setChatHistory(resp.data);
+      console.log("chat_history Fetched...");
+    }
+    catch (ex) {
+      console.error("Error select characters:", ex);
+    }
+  }
+
   /***
    * 質問ボタンを押下時にYour Questionに値をはめる関数
    */
-  const registerYourQuestion = async (user_question_content) => {
+  const registerYourQuestion = async (user_question_content: string) => {
     setUserQuestion(user_question_content);
   }
 
-  const handleGenreChange = (e) => {
+  const handleGenreChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const genre = Number(e.target.value);
-    console.log(genre)
     setSelectedGenre(genre);
   }
 
@@ -115,7 +127,7 @@ export default function EngAiAkinator() {
    * 回答ボタンを押下時に選択肢をpostする関数
    */
 
-  const tryAnswer = async (formData) => {
+  const tryAnswer = async (formData:FormData) => {
     // e.preventDefault(); // ページリロードを阻止する処理
     // const form = e.target
     // const formData = new FormData(form) // formの要素を取得
@@ -142,10 +154,10 @@ export default function EngAiAkinator() {
 
   // コンストラクタ
   useEffect(() => {
-    initializeQuestion();
     selectGenres();
     selectCharacters();
     selectRandQuestions();
+    // getChatHistory();
   }, []
   );
 
@@ -176,7 +188,7 @@ export default function EngAiAkinator() {
               {rand_questions.map((question, index) => {
                 return (
                   <React.Fragment key={question.question_id}>
-                    <button name={index} className='flex-1 h-full bg-slate-700 rounded-lg text-2xl' value={question.question_id} onClick={
+                    <button className='flex-1 h-full bg-slate-700 rounded-lg text-2xl' value={question.question_id} onClick={
                       () => {
                         registerQuestion(question.question_content)
                         registerYourQuestion(question.question_content)
@@ -207,18 +219,36 @@ export default function EngAiAkinator() {
               <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
                 {user_question}
               </div>
-              <textarea className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center " value={ai_answer}>
-
-              </textarea>
+              <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
+                <ReactMarkdown>
+                  {ai_answer}
+                </ReactMarkdown>
+              </div>
             </div>
           </div>
-          {/* Bottom 1/3 : Features */}
-          <div className="flex-[1] flex flex-col">
-            <div className="flex justify-between items-center mb-2 border-b border-yellow-400">
-              <h2 className="text-yellow-400 font-bold text-4xl">Features</h2>
-              <button className="text-cyan-400 text-3xl">🔄</button>
+
+          <div className="flex-[1]  flex flex-col">
+            {/* Your Question & AI Hint */}
+            <div className="flex flex-col mb-2">
+              {/*Your QuestionとAI Hintの並列 */}
+              <div className="flex flex-[1] items-center gap-3">
+                <h2 className="flex-1 text-yellow-400 font-bold text-4xl border-b border-yellow-400">Past Q＆A</h2>
+                <div className="flex-1 flex justify-between items-center border-b border-yellow-400">
+                  <h2 className="text-yellow-400 font-bold text-4xl">Features</h2>
+                  <button className="text-cyan-400 text-3xl">🔄</button>
+                </div>
+              </div>
             </div>
-            <div className="flex-1 bg-slate-700 rounded-lg mt-2"></div>
+            {/*箱 */}
+            <div className="flex flex-1 gap-3 mt-2">
+              <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
+                {chat_history}
+              </div>
+              <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
+                <ReactMarkdown>
+                </ReactMarkdown>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -227,7 +257,7 @@ export default function EngAiAkinator() {
           {/* Past Q & A */}
           <div className="flex-[1] flex flex-col">
             <h2 className="text-purple-400 font-bold text-4xl mb-2  border-b border-purple-400">
-              Past Q & A
+              Past Answer
             </h2>
             <textarea
               className="h-full bg-slate-700 rounded-lg mt-2"
