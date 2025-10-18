@@ -10,6 +10,8 @@ export default function EngAiAkinator() {
   const [ai_answer, setAiAnswer] = useState("質問をしてください");
   const session_id = useRef(null);
   const [user_question, setUserQuestion] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState(null);
+
 
   /**
    * APIからジャンルを取得する関数
@@ -95,6 +97,20 @@ export default function EngAiAkinator() {
     setUserQuestion(user_question_content);
   }
 
+  const handleGenreChange = (e) => {
+    const genre = Number(e.target.value);
+    console.log(genre)
+    setSelectedGenre(genre);
+  }
+
+  /**
+   * ジャンルマスタを指定した際にキャラクタマスタを絞り込む関数
+   */
+  const selectValueUpdateCharacter = async () => {
+
+  }
+
+
   /***
    * 回答ボタンを押下時に選択肢をpostする関数
    */
@@ -115,6 +131,7 @@ export default function EngAiAkinator() {
         alert("...正解！")
       else
         alert("残念...！\n再チャレンジしてね！")
+      setSelectedGenre(null); // 内部のジャンルのプルダウンもリセット
       console.log("posted answer!")
     }
     catch (ex) {
@@ -190,8 +207,8 @@ export default function EngAiAkinator() {
               <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
                 {user_question}
               </div>
-              <textarea className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center "value={ai_answer}>
-                
+              <textarea className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center " value={ai_answer}>
+
               </textarea>
             </div>
           </div>
@@ -252,7 +269,7 @@ export default function EngAiAkinator() {
             <form className="flex flex-col gap-2 mt-2" action={tryAnswer}>
               <div className="flex flex-col">
                 <label>Genre</label>
-                <select className="bg-slate-700 p-2 rounded-lg" name="pref_janre" defaultValue="" required>
+                <select className="bg-slate-700 p-2 rounded-lg" name="pref_janre" defaultValue="" required onChange={handleGenreChange}>
                   {/* <option>Select Genre</option> */}
                   <option value="" disabled hidden>
                     ジャンル名を選択してください
@@ -275,14 +292,19 @@ export default function EngAiAkinator() {
                   <option value="" disabled hidden>
                     キャラクタ名を選択してください
                   </option>
-                  {characters.map((character) => {
-                    return (
-                      <React.Fragment key={character.id}>
-                        <option value={character.id}>{character.character_name}</option>
-                      </React.Fragment>
+                  {characters
+                    .filter(character => {
+                      if (selectedGenre == null) return true // ジャンルが選択されていなかったらジャンルに関係なく全キャラを表示
+                      return character.genre_code === selectedGenre
+                    })
+                    .map((character) => {
+                      return (
+                        <React.Fragment key={character.id}>
+                          <option value={character.id}>{character.character_name}</option>
+                        </React.Fragment>
+                      )
+                    }
                     )
-                  }
-                  )
                   }
                 </select>
 
