@@ -26,7 +26,7 @@ export default function Sidebar({
           } bg-gray-800 transition-all duration-300 flex flex-col`}
       >
         <button
-          className="p-2 bg-gray-700 hover:bg-gray-600"
+          className="p-2 bg-slate-800 hover:bg-gray-600"
           onClick={() => setSidebarIsOpen(!sidebarIsOpen)}
         >
           {sidebarIsOpen ? "←" : "→"}
@@ -49,7 +49,7 @@ export default function Sidebar({
                       : "hover:bg-gray-700"
                       }`}
                   >
-                    {question.character_name || "無題のチャット"}
+                    {question.character_name}
                   </div>
                 </Link>
               ))}

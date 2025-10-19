@@ -261,7 +261,7 @@ export default function EngAiAkinator({
             </h2>
             <textarea
               className="h-full bg-slate-700 rounded-lg mt-2"
-              value="あああああああああああああああああああああああああああああ
+              defaultValue="あああああああああああああああああああああああああああああ
                 あああああああああああああああああああああああああああああああああ
                 あああああああああああああああああああああああああああああああああ
                 あああああああああああああああああああああああああああああああああ
@@ -341,7 +341,7 @@ export default function EngAiAkinator({
               </div>
               <button
                 type="submit"
-                className="h-24 mt-5 bg-blue-500 text-white font-bold py-2 rounded-lg hover:bg-blue-600 text-xl mb-5"
+                className="h-24 mt-5 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-500 text-xl mb-5"
               >
                 Answer!
               </button>

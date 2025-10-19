@@ -3,6 +3,7 @@ import Sidebar from "./sidebar";
 import EngAiAkinator from "./EngAiAkinator";
 import { BeatLoader, RingLoader } from "react-spinners";
 import axios from 'axios';
+import { Question } from "@/types/question";
 
 
 type MainProps = {
@@ -13,9 +14,10 @@ export default function Main({ paramSessionID }: MainProps) {
 
     // 現在のセッションID
     const [currentSessionID, setCurrentSessionID] = useState<number | null>(null)
-    const [questions, SetQuestions] = useState([]);
+    const [questions, SetQuestions] = useState<Question[]>([]);
     const [displayLoading, setDisplayLoading] = useState<boolean>(true);
-    const [delayLoading, setDelayLoading] = useState<boolean>(true);
+    let initialize_flag = true;
+    // const [delayLoading, setDelayLoading] = useState<boolean>(true);
 
     /***
      * 【初期化処理】
@@ -26,26 +28,44 @@ export default function Main({ paramSessionID }: MainProps) {
             console.log("initializing new Question...")
             const resp = await axios.post("http://127.0.0.1:8000/new_question");
             setCurrentSessionID(resp.data.session_id)
-
             console.log("initialized new Quesiton!")
         }
         catch (ex) {
             console.error("Error initialize new Question:", ex)
         }
-        finally {
-            await wait(500); // 5秒待つ
-            setDisplayLoading(false)
+    }
+
+    /***
+     * サイドバーに表示するための情報を取得
+     */
+    const selectAllSessionInfo = async () => {
+        try {
+            console.log("Fetching session_info ...");
+            const resp = await axios.get("http://127.0.0.1:8000/get_all_session_info")
+            SetQuestions(resp.data)
+            console.log("session_info Fetched!");
+        }
+        catch (ex) {
+            console.error("Error session_info:", ex);
         }
     }
 
-    const wait = async (ms:number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const wait = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     useEffect(() => {
-        if (paramSessionID != null)
+        console.log(paramSessionID)
+        if (paramSessionID != null) {
             setCurrentSessionID(paramSessionID)
-        else {
-            initializeQuestion()
+            selectAllSessionInfo()
         }
+        else {
+            if (initialize_flag) {
+                initializeQuestion().then(selectAllSessionInfo)
+                initialize_flag = false;
+            }
+        }
+        setDisplayLoading(false)
     }, [paramSessionID])
 
     return (
@@ -63,7 +83,7 @@ export default function Main({ paramSessionID }: MainProps) {
             )}
             <div className="flex h-screen">
                 <Sidebar
-                    currentQuestionID={88}
+                    currentQuestionID={currentSessionID}
                     setCurrentSessionID={setCurrentSessionID}
                     questions={questions}
                 >
