@@ -2,6 +2,7 @@ import React, { ChangeEvent, useRef } from 'react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { ChatHistory } from '@/types/chatHistory';
 
 type EngAiAkinatorProps = {
   current_session_id: number;
@@ -11,19 +12,18 @@ export default function EngAiAkinator({
   current_session_id
 }: EngAiAkinatorProps) {
 
-  const [genres, setGenres] = useState<{genre_code:number,genre_name:string}[]>([]);
+  const [genres, setGenres] = useState<{ genre_code: number, genre_name: string }[]>([]);
   const [characters, setCharacters] = useState<{
-    id:number,
-    character_name:string,
-    genre_code:number,
-    question_times:number
+    id: number,
+    character_name: string,
+    genre_code: number,
+    question_times: number
   }[]>([]);
-  const [rand_questions, setRandQuestions] = useState<{question_id:number,question_content:string}[]>([]);
+  const [rand_questions, setRandQuestions] = useState<{ question_id: number, question_content: string }[]>([]);
   const [ai_answer, setAiAnswer] = useState("質問をしてください");
-  const session_id = useRef(null);
   const [user_question, setUserQuestion] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
-  const [chat_history, setChatHistory] = useState([]);
+  const [chat_history, setChatHistory] = useState<string>("会話履歴がありません。");
 
   /**
    * APIからジャンルを取得する関数
@@ -77,7 +77,7 @@ export default function EngAiAkinator({
   const registerQuestion = async (user_question: string) => {
     try {
       console.log("posting question...")
-      const data = { session_id: session_id.current, user_question_content: user_question }
+      const data = { session_id: current_session_id, user_question_content: user_question }
       const resp = await axios.post("http://127.0.0.1:8000/ask_ai", data);
       setAiAnswer(resp.data.ai_answer)
       console.log("posted question!")
@@ -93,15 +93,35 @@ export default function EngAiAkinator({
   const getChatHistory = async () => {
     try {
       console.log("Fetching chat_history...");
-      console.log(session_id.current)
-      const resp = await axios.get(`http://127.0.0.1:8000/past_q_and_a/${session_id.current}`);
-      setChatHistory(resp.data);
+      console.log(current_session_id)
+      const resp = await axios.get(`http://127.0.0.1:8000/past_q_and_a/${current_session_id}`);
+      console.log(resp.data)
+      const result = changeArr2StrChatHistory(resp.data)
+      setChatHistory(result ? result : "会話履歴がありません。");
       console.log("chat_history Fetched...");
     }
     catch (ex) {
       console.error("Error select characters:", ex);
     }
   }
+
+  /***
+   * chatHistoryの配列を文字列に変換する関数
+   */
+  const changeArr2StrChatHistory = (chats: ChatHistory[]) => {
+    let chatString: string = "";
+    chats.forEach(chat => {
+      chatString += "【" + chat.role + "】" + chat.message.replace(/\s+/g, "") + "\n"
+      if (chat.role === "assistant")
+        chatString += "\n";
+    });
+    console.log(chatString)
+    return chatString;
+  }
+
+  /***
+   * chatHistory内の改行を除去する関数
+   */
 
   /***
    * 質問ボタンを押下時にYour Questionに値をはめる関数
@@ -115,26 +135,19 @@ export default function EngAiAkinator({
     setSelectedGenre(genre);
   }
 
-  /**
-   * ジャンルマスタを指定した際にキャラクタマスタを絞り込む関数
-   */
-  const selectValueUpdateCharacter = async () => {
-
-  }
-
 
   /***
    * 回答ボタンを押下時に選択肢をpostする関数
    */
 
-  const tryAnswer = async (formData:FormData) => {
+  const tryAnswer = async (formData: FormData) => {
     // e.preventDefault(); // ページリロードを阻止する処理
     // const form = e.target
     // const formData = new FormData(form) // formの要素を取得
     try {
       console.log("posting answer...");
       const data = {
-        "session_id": session_id.current,
+        "session_id": current_session_id,
         "user_answer_character_id": formData.get("pref_character")
       };
       console.log("フォームのJSONデータ:", data);
@@ -161,6 +174,10 @@ export default function EngAiAkinator({
   }, []
   );
 
+  useEffect(() => {
+    getChatHistory()
+  }, [current_session_id])
+
   return (
     <div className="h-screen w-screen bg-slate-900 text-gray-200 flex flex-col">
       {/* Header */}
@@ -170,11 +187,11 @@ export default function EngAiAkinator({
       </header>
 
       {/* Main layout */}
-      <main className="flex flex-1 gap-4 p-8">
+      <main className="flex h-full flex-1 gap-4 p-4">
         {/* Left Section */}
-        <div className="flex-[3] flex flex-col gap-4 bg-slate-800 rounded-2xl p-8">
+        <div className="flex-[3] flex flex-col gap-4 bg-slate-800 rounded-2xl p-6">
           {/* Top 2/3 : Ask + Hint */}
-          <div className="flex-[1] flex flex-col">
+          <div className="flex flex-col">
             {/* Ask Next Question */}
             <div className="flex flex-col">
               <div className="flex justify-between items-center mb-2 border-b border-blue-400">
@@ -188,7 +205,7 @@ export default function EngAiAkinator({
               {rand_questions.map((question, index) => {
                 return (
                   <React.Fragment key={question.question_id}>
-                    <button className='flex-1 h-full bg-slate-700 rounded-lg text-2xl' value={question.question_id} onClick={
+                    <button className='flex-1 h-20 bg-slate-700 rounded-lg text-2xl' value={question.question_id} onClick={
                       () => {
                         registerQuestion(question.question_content)
                         registerYourQuestion(question.question_content)
@@ -216,13 +233,17 @@ export default function EngAiAkinator({
             </div>
             {/*箱 */}
             <div className="flex flex-1 gap-3 mt-2">
-              <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
+              <div className="flex-1 h-60 bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
                 {user_question}
               </div>
-              <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
-                <ReactMarkdown>
-                  {ai_answer}
-                </ReactMarkdown>
+              <div
+                style={{ whiteSpace: 'pre-line', overflowY: "auto", border: "1px", }}
+                className="flex-1 h-60 bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
+                <div className={`flex-col ${ai_answer==="質問をしてください"?"":"h-full"}`} >
+                  <ReactMarkdown>
+                    {ai_answer}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           </div>
@@ -240,9 +261,21 @@ export default function EngAiAkinator({
               </div>
             </div>
             {/*箱 */}
-            <div className="flex flex-1 gap-3 mt-2">
-              <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
-                {chat_history}
+            <div className="flex flex-1 h-full gap-3 mt-2">
+              <div
+                style={{ whiteSpace: 'pre-line', overflowY: "auto", border: "1px", }}
+                className="flex-1 h-60 bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
+                <div className={`flex-col ${chat_history==="会話履歴がありません。"?"":"h-full"}`}>
+                  {
+                    chat_history === "会話履歴がありません。"
+                      ?
+                      (<>{chat_history}</>)
+                      : (
+                        <ReactMarkdown>
+                          {chat_history}
+                        </ReactMarkdown>
+                      )}
+                </div>
               </div>
               <div className="flex-1 h-full bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
                 <ReactMarkdown>
