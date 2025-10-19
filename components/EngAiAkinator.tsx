@@ -241,7 +241,7 @@ export default function EngAiAkinator({
                 className="flex-1 h-60 bg-slate-700 rounded-lg text-2xl flex items-center justify-center ">
                 <div className={`flex-col ${ai_answer==="質問をしてください"?"":"h-full"}`} >
                   <ReactMarkdown>
-                    {ai_answer}
+                    {ai_answer.replace(/\s+/g, "")}
                   </ReactMarkdown>
                 </div>
               </div>
